@@ -2,5 +2,21 @@
 {% block title %}Wishlist{% endblock %}
 {% block content %}
 <h1>Wishlist</h1>
-<p>Your wishlist items will appear here.</p>
+<div id="wishlist-list">Loading...</div>
+
+<script>
+function loadWishlist(){
+	apiFetch('/api/wishlists/').then(r=>{
+		const c = document.getElementById('wishlist-list');
+		if(!r.items || r.items.length===0){ c.innerHTML = '<p>Your wishlist is empty.</p>'; return }
+		c.innerHTML = r.items.map(it=>`<div class="card mb-2"><div class="card-body d-flex justify-content-between"><div><strong>${it.name}</strong><br/>$${it.price}</div><div><button class="btn btn-sm btn-danger" onclick="removeWish(${it.id})">Remove</button></div></div></div>`).join('');
+	}).catch(e=>{ document.getElementById('wishlist-list').innerText='Error loading wishlist'; console.error(e) });
+}
+
+function removeWish(id){
+	apiFetch('/api/wishlists/'+id, {method:'DELETE'}).then(r=>loadWishlist()).catch(e=>{alert('Remove failed'); console.error(e)});
+}
+
+loadWishlist();
+</script>
 {% endblock %}

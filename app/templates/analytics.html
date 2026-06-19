@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<h1>Analytics</h1>
+<div class="row">
+  <div class="col-md-3"><div class="card p-3">Products<br/><h3>{{ metrics.products }}</h3></div></div>
+  <div class="col-md-3"><div class="card p-3">Orders<br/><h3>{{ metrics.orders }}</h3></div></div>
+  <div class="col-md-3"><div class="card p-3">Customers<br/><h3>{{ metrics.customers }}</h3></div></div>
+  <div class="col-md-3"><div class="card p-3">Revenue<br/><h3>${{ metrics.revenue }}</h3></div></div>
+</div>
+{% endblock %}

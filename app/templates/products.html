@@ -64,6 +64,7 @@ content %}
 </div>
 
 <script>
+  window.IS_ADMIN = {{ 'true' if user and user.role and user.role.name == 'admin' else 'false' }};
   function apiFetch(url, opts={}){
       opts.credentials = opts.credentials || 'same-origin';
       if(!opts.headers) opts.headers = {};
@@ -80,9 +81,9 @@ content %}
       });
   }
 
-  function renderProducts(data){
+    function renderProducts(data){
       const container = document.getElementById('product-list');
-      const IS_ADMIN = {{ 'true' if user and user.role and user.role.name == 'admin' else 'false' }};
+      const IS_ADMIN = window.IS_ADMIN;
       container.innerHTML = data.map(p => {
           return `
           <div class="col-md-4 mb-3">
@@ -93,9 +94,10 @@ content %}
                       <p class="card-text"><strong>SKU:</strong> ${p.sku}</p>
                       <p class="card-text"><strong>Price:</strong> $${p.selling_price}</p>
                       <p class="card-text"><strong>Stock:</strong> ${p.quantity}</p>
-                      <div class="mt-auto d-flex justify-content-between align-items-center">
+                        <div class="mt-auto d-flex justify-content-between align-items-center">
                           <div>
-                              <button class="btn btn-sm btn-outline-primary" onclick="addToCart(${p.id})">Add to cart</button>
+                            ${ (!IS_ADMIN && p.quantity>0) ? `<button class="btn btn-sm btn-outline-primary" onclick="addToCart(${p.id})">Add to cart</button>` : (p.quantity<=0 ? `<span class="badge bg-secondary">Not available</span>` : '') }
+                            <button class="btn btn-sm btn-link text-danger" onclick="toggleWishlist(${p.id}, this)">${p.in_wishlist? '♥' : '♡'}</button>
                           </div>
                           ${ IS_ADMIN ? `<div class="btn-group">
                               <button class="btn btn-sm btn-warning" onclick="editProduct(${p.id}, '${escapeJs(p.name)}', '${p.sku}', ${p.selling_price}, ${p.quantity}, '${escapeJs(p.description||'')}')">Edit</button>
@@ -118,7 +120,14 @@ content %}
       apiFetch(url).then(data => renderProducts(data)).catch(err=>console.error(err));
   }
 
+    function toggleWishlist(productId, el){
+      apiFetch('/api/wishlists/add?product_id='+productId, {method:'POST'})
+      .then(r=>{ el.innerText = '♥'; })
+      .catch(e=>{ alert('Wishlist error'); console.error(e)});
+    }
+
   function addToCart(productId, qty=1){
+      if(window.IS_ADMIN){ alert('Admins cannot add to cart'); return; }
       apiFetch(`/api/carts/add?product_id=${productId}&quantity=${qty}`, {method:'POST'})
       .then(r=>{
           alert('Added to cart');

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Order {{ order.order_number }}{% endblock %}
+{% block content %}
+<h1>Order {{ order.order_number }}</h1>
+<p>Status: {{ order.status }} — Total: ${{ order.total }}</p>
+<p>Placed: {{ order.created_at }}</p>
+<hr/>
+<h4>Items</h4>
+<ul>
+  {% for it in order.items %}
+    <li>{{ it.name }} x {{ it.quantity }} — ${{ it.total }}</li>
+  {% endfor %}
+</ul>
+<a href="/orders" class="btn btn-link">Back to Orders</a>
+{% endblock %}

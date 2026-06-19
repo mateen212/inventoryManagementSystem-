@@ -1,51 +1,206 @@
-# Inventory Management System
+ # Inventory Management System — Production Documentation
 
-A production-ready inventory management web application built with FastAPI, SQLAlchemy, and Bootstrap 5.
+This repository contains a lightweight Inventory Management System built with FastAPI, SQLAlchemy and Jinja2 templates. It is intended as a pragmatic starter for small-to-medium inventory/e‑commerce projects and includes an admin dashboard and customer-facing storefront.
 
-## Features
+Overview
+--------
+- FastAPI app with a REST API (under `/api/*`) and server-rendered pages (web routes).
+- SQLAlchemy ORM models with Alembic-compatible migrations.
+- Jinja2 templates and Bootstrap-based frontend in `app/templates` and `app/static`.
 
-- Admin and Customer roles
-- Product, Category, Warehouse, Supplier, Customer management
-- Order management with statuses
-- Shopping cart
-- Reports and analytics
-- Barcode and QR code generation
-- Import/Export (CSV, Excel, JSON, PDF)
-- Notification center
-- Invoice generation
-- Image management
-- Backup and restore
-- Wishlist
-- Activity logs
-- Dark/Light mode
+Primary features (implemented)
+------------------------------
+- Products: listing, admin CRUD, price, SKU and stock
+- Cart: persistent cart (add/update/remove) and checkout → `Order` creation
+- Orders: list (customer) and detailed view per order
+- Wishlist: add/remove favorites from product cards, user wishlist page
+- Notifications: admin send/broadcast; customer inbox + mark-as-read
+- Admin pages: basic `customers` management and `analytics` metrics
 
-## Installation
+Architecture & Key Files
+------------------------
+- `app/main.py` — app entrypoint and router registration
+- `app/api/` — REST API routers: `products`, `carts`, `orders`, `wishlists`, `notifications`, `customers`, etc.
+- `app/web/routes.py` — server-rendered routes for HTML pages
+- `app/templates/` — Jinja2 templates used by web routes
+- `app/static/` — CSS and static assets
+- `app/models/` — SQLAlchemy models (`Product`, `Cart`, `Order`, `Wishlist`, `Notification`, `User`, ...)
+- `app/services/` & `app/repositories/` — business logic and DB access layers
+- `requirements.txt` — pinned dependencies required to run the project
 
-1. Create a virtual environment: `python -m venv venv`
-2. Activate: `source venv/bin/activate` (Linux/Mac) or `venv\\Scripts\\activate` (Windows)
-3. Install dependencies: `pip install -r requirements.txt`
-4. Copy `.env.example` to `.env` and update settings.
-5. Run migrations: `alembic upgrade head`
-6. Run the application: `inventory-manager run` or `uvicorn app.main:app --host 0.0.0.0 --port 8000`
+Dependencies
+------------
+Primary runtime packages (from `requirements.txt`):
+- `fastapi`, `uvicorn[standard]` — web framework and server
+- `sqlalchemy`, `alembic` — ORM and migrations
+- `pydantic`, `pydantic-settings` — settings and data validation
+- `jinja2`, `python-multipart` — templating and form parsing
+- `python-jose[cryptography]`, `bcrypt`, `passlib[bcrypt]` — JWT and password hashing
+- `pymysql` — MySQL driver (used for MySQL/MariaDB; optional)
 
-## Usage
+Utilities and optional packages included:
+- `pandas`, `numpy`, `matplotlib`, `openpyxl`, `xlsxwriter`, `reportlab` — reporting & exports
+- `python-barcode`, `qrcode`, `Pillow`, `pyzbar` — barcode/Qr code and image handling
+- `schedule` — lightweight task scheduling (in-process)
+- `pytest`, `pytest-cov` — test tooling
 
-- Access the web interface at `http://localhost:8000`
-- Admin login: admin@example.com / admin123 (seed)
+Note: For Postgres use `psycopg[binary]` and set `DATABASE_URL` accordingly. Adjust `requirements.txt` if you switch DB drivers.
 
-## CLI Commands
+Environment & Configuration
+---------------------------
+The app reads configuration from environment variables (via `pydantic-settings`). Key variables:
+- `DATABASE_URL` — SQLAlchemy database URL (e.g. `sqlite:///./dev.db`, `postgresql+psycopg2://user:pass@host/db`)
+- `SECRET_KEY` — JWT signing secret (set in production)
+- `ACCESS_TOKEN_EXPIRE_MINUTES` — token lifetime (integer)
+- `APP_NAME` — display name for the app
 
-- `inventory-manager run` - start the server
-- `inventory-manager add-product` - add a product via CLI
-- `inventory-manager update-stock` - update stock
-- `inventory-manager export-data` - export data
-- `inventory-manager backup-db` - backup database
-- `inventory-manager restore-db` - restore database
+Local development defaults are safe for experimentation, but set strong secrets and a production DB for deployments.
 
-## Testing
+Quickstart — Linux / macOS
+--------------------------
+1. Clone the repo and enter it:
 
-Run tests: `pytest --cov=app`
+```bash
+git clone <repo> && cd inventoryManagementSystem-
+```
 
-## License
+2. Create and activate a virtual environment:
 
-MIT
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+3. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+4. (Optional) set an SQLite DB for development:
+
+```bash
+export DATABASE_URL=sqlite:///./dev.db
+export SECRET_KEY="dev-secret"
+```
+
+5. Start the app:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+6. Open `http://localhost:8000`.
+
+The project seeds a default admin user on first startup: `admin@example.com` / `admin123` (change in production).
+
+Quickstart — Windows (PowerShell)
+---------------------------------
+```powershell
+git clone <repo>; cd inventoryManagementSystem-
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+$env:DATABASE_URL = 'sqlite:///./dev.db'
+$env:SECRET_KEY = 'dev-secret'
+uvicorn app.main:app --reload
+```
+
+Docker (optional)
+-----------------
+You can run the app inside a container. Example Dockerfile and docker-compose are not included by default, but a simple approach:
+
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY . /app
+RUN python -m pip install --upgrade pip && pip install -r requirements.txt
+ENV DATABASE_URL=sqlite:///./dev.db
+CMD ["uvicorn","app.main:app","--host","0.0.0.0","--port","8000"]
+```
+
+Run migrations (Alembic)
+------------------------
+If you use Alembic, update `alembic.ini` and run:
+
+```bash
+alembic upgrade head
+```
+
+Seed data
+---------
+On startup the app attempts to create an admin user if none exists. For more complex seeding, provide a `seeder.py` script or call services to create demo data.
+
+API Summary (high level)
+-------------------------
+- `GET /api/products/` — list products
+- `POST /api/products/` — create product (admin)
+- `GET /api/products/{id}` — product detail
+- `GET /api/products/search?q=` — search
+
+- `GET /api/carts/` — current user's cart
+- `POST /api/carts/add?product_id=&quantity=` — add to cart
+- `PUT /api/carts/{item_id}?quantity=` — update cart item
+- `DELETE /api/carts/{item_id}` — remove cart item
+- `POST /api/carts/checkout` — checkout (creates order)
+
+- `GET /api/wishlists/`, `POST /api/wishlists/add?product_id=`, `DELETE /api/wishlists/{id}`
+
+- `GET /api/notifications/`, `PUT /api/notifications/{id}/mark-read`, `POST /api/notifications/send`, `POST /api/notifications/broadcast`
+
+Web pages (server-rendered)
+--------------------------
+- `/products` — product listing (customer & admin UI)
+- `/cart` — cart page
+- `/wishlists` — wishlist page
+- `/orders` — customer's orders
+- `/orders/{id}` — order detail
+- Admin pages (admin only): `/` (dashboard), `/analytics`, `/customers`, `/notifications`
+
+Security & Production Notes
+---------------------------
+- Always set `SECRET_KEY` in production and rotate it appropriately.
+- Use HTTPS and set `secure=True` for cookies.
+- Use a robust RDBMS (Postgres, MySQL) and connection pooling.
+- Run Alembic migrations during deployment and never run `Base.metadata.create_all()` in production without care.
+- Validate user input at both API and UI boundaries.
+
+Testing
+-------
+Run unit and integration tests with `pytest`.
+
+```bash
+pytest -q
+```
+
+Suggested integration tests:
+- Cart add → checkout → order exists and product quantity decremented
+- Wishlist add/remove
+- Notifications sending and marking read
+
+Roadmap / Future Work
+---------------------
+- Product variants & sizes (per-variant stock and SKU)
+- Payment integration and order payment status
+- Inventory reservations and optimistic locking for high concurrency
+- Role & permission management UI (fine grained)
+- Export/reporting pipelines, scheduled backups
+- End-to-end tests and CI/CD pipeline
+
+Contributing
+------------
+Fork and open pull requests. Follow the existing code style, add tests for new features, and update this README if you change behaviors or APIs.
+
+License
+-------
+This project currently does not include a license file. Add a `LICENSE` when preparing for public distribution.
+
+Questions / Next steps
+---------------------
+If you want, I can now:
+- implement product variants/sizes (recommended next step to fully support size=0 availability rules),
+- add automated integration tests for cart→checkout,
+- or expand admin UI with pagination/search and CSV export.
+
+Which should I do next?
+

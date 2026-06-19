@@ -132,10 +132,28 @@ async def suppliers_page(request: Request, current_user: User = Depends(get_curr
     return templates.TemplateResponse("placeholder.html", {"request": request, "user": current_user, "title": "Suppliers"})
 
 @router.get("/orders", response_class=HTMLResponse)
-async def orders_page(request: Request, current_user: User = Depends(get_current_user_optional)):
+async def orders_page(request: Request, current_user: User = Depends(get_current_user_optional), db: Session = Depends(get_db)):
     if not current_user:
         return RedirectResponse(url="/login", status_code=302)
-    return templates.TemplateResponse("placeholder.html", {"request": request, "user": current_user, "title": "Orders"})
+    from app.models.order import Order
+    orders = []
+    q = db.query(Order).filter(Order.customer_id == current_user.id).order_by(Order.created_at.desc()).all()
+    for o in q:
+        orders.append({
+            "id": o.id,
+            "order_number": o.order_number,
+            "status": getattr(o.status, 'value', str(o.status)),
+            "total": f"{o.total_amount:.2f}",
+            "created_at": o.created_at,
+            "items_list": [{
+                "name": getattr(it.product, 'name', 'Product'),
+                "quantity": it.quantity,
+                "price": it.price,
+                "total": it.total
+            } for it in o.items]
+        })
+
+    return templates.TemplateResponse("orders.html", {"request": request, "user": current_user, "orders": orders})
 
 @router.get("/customers", response_class=HTMLResponse)
 async def customers_page(request: Request, current_user: User = Depends(get_current_user_optional)):
@@ -143,7 +161,8 @@ async def customers_page(request: Request, current_user: User = Depends(get_curr
         return RedirectResponse(url="/login", status_code=302)
     if not current_user.role or current_user.role.name != 'admin':
         raise HTTPException(status_code=403, detail="Admin access required")
-    return templates.TemplateResponse("placeholder.html", {"request": request, "user": current_user, "title": "Customers"})
+    # server-side minimal dataset for admin UI; JS will fetch details
+    return templates.TemplateResponse("customers.html", {"request": request, "user": current_user})
 
 @router.get("/reports", response_class=HTMLResponse)
 async def reports_page(request: Request, current_user: User = Depends(get_current_user_optional)):
@@ -159,13 +178,23 @@ async def analytics_page(request: Request, current_user: User = Depends(get_curr
         return RedirectResponse(url="/login", status_code=302)
     if not current_user.role or current_user.role.name != 'admin':
         raise HTTPException(status_code=403, detail="Admin access required")
-    return templates.TemplateResponse("placeholder.html", {"request": request, "user": current_user, "title": "Analytics"})
+    # compute some simple metrics
+    from app.models.product import Product
+    from app.models.order import Order
+    from app.models.user import User as UserModel
+    db = request.state.db
+    products_count = db.query(Product).count()
+    orders_count = db.query(Order).count()
+    customers_count = db.query(UserModel).filter(UserModel.role.has(name='customer')).count()
+    revenue = db.query(func.coalesce(func.sum(Order.total_amount), 0.0)).scalar()
+    metrics = {"products": products_count, "orders": orders_count, "customers": customers_count, "revenue": f"{revenue:.2f}"}
+    return templates.TemplateResponse("analytics.html", {"request": request, "user": current_user, "metrics": metrics})
 
 @router.get("/notifications", response_class=HTMLResponse)
 async def notifications_page(request: Request, current_user: User = Depends(get_current_user_optional)):
     if not current_user:
         return RedirectResponse(url="/login", status_code=302)
-    return templates.TemplateResponse("placeholder.html", {"request": request, "user": current_user, "title": "Notifications"})
+    return templates.TemplateResponse("notifications.html", {"request": request, "user": current_user})
 
 @router.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request, current_user: User = Depends(get_current_user_optional)):
@@ -229,3 +258,32 @@ async def logs_page(request: Request, current_user: User = Depends(get_current_u
 @router.get("/order-success", response_class=HTMLResponse)
 async def order_success_page(request: Request, current_user: User = Depends(get_current_user_optional)):
     return templates.TemplateResponse("order_success.html", {"request": request, "user": current_user})
+
+
+@router.get("/orders/{order_id}", response_class=HTMLResponse)
+async def order_detail_page(request: Request, order_id: int, current_user: User = Depends(get_current_user_optional), db: Session = Depends(get_db)):
+    if not current_user:
+        return RedirectResponse(url="/login", status_code=302)
+    from app.models.order import Order
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    # allow owner or admin
+    if order.customer_id != current_user.id and (not current_user.role or current_user.role.name != 'admin'):
+        raise HTTPException(status_code=403, detail="Not allowed to view this order")
+
+    order_data = {
+        "id": order.id,
+        "order_number": order.order_number,
+        "status": getattr(order.status, 'value', str(order.status)),
+        "total": f"{order.total_amount:.2f}",
+        "created_at": order.created_at,
+        "items": [{
+            "name": getattr(it.product, 'name', 'Product'),
+            "quantity": it.quantity,
+            "price": it.price,
+            "total": it.total
+        } for it in order.items]
+    }
+
+    return templates.TemplateResponse("order_detail.html", {"request": request, "user": current_user, "order": order_data})

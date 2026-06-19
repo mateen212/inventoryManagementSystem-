@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<h1>Notifications</h1>
+<div id="notifications-list">Loading...</div>
+
+<script>
+function loadNotifications(){
+  apiFetch('/api/notifications/').then(r=>{
+    const c = document.getElementById('notifications-list');
+    if(!r.notifications || r.notifications.length===0){ c.innerHTML = '<p>No notifications.</p>'; return }
+    c.innerHTML = r.notifications.map(n=>`<div class="card mb-2"><div class="card-body d-flex justify-content-between"><div><strong>${n.title}</strong><p>${n.message}</p><small>${n.created_at}</small></div><div>${n.is_read?'<span class="badge bg-secondary">Read</span>':`<button class="btn btn-sm btn-primary" onclick="markRead(${n.id})">Mark read</button>`}</div></div></div>`).join('');
+  }).catch(e=>{ document.getElementById('notifications-list').innerText='Error loading notifications'; console.error(e) });
+}
+function markRead(id){ apiFetch('/api/notifications/'+id+'/mark-read', {method:'PUT'}).then(()=>loadNotifications()).catch(e=>{alert('Mark failed'); console.error(e)}); }
+loadNotifications();
+</script>
+
+{% if user and user.role and user.role.name == 'admin' %}
+<hr/>
+<h3>Send Notification</h3>
+<form id="send-notif" class="row g-2">
+  <div class="col-md-4"><input id="notif-user" class="form-control" placeholder="User ID (leave blank for broadcast)" /></div>
+  <div class="col-md-4"><input id="notif-title" class="form-control" placeholder="Title" required /></div>
+  <div class="col-md-12"><textarea id="notif-msg" class="form-control" placeholder="Message" required></textarea></div>
+  <div class="col-12"><button class="btn btn-success">Send</button></div>
+</form>
+<script>
+document.getElementById('send-notif').addEventListener('submit', function(e){ e.preventDefault(); const uid = document.getElementById('notif-user').value; const title = document.getElementById('notif-title').value; const msg = document.getElementById('notif-msg').value; if(uid){ apiFetch('/api/notifications/send?user_id='+uid+'&title='+encodeURIComponent(title)+'&message='+encodeURIComponent(msg), {method:'POST'}).then(()=>{alert('Sent'); loadNotifications();}).catch(e=>{alert('Send failed');console.error(e)}); }else{ apiFetch('/api/notifications/broadcast?title='+encodeURIComponent(title)+'&message='+encodeURIComponent(msg), {method:'POST'}).then(()=>{alert('Broadcast sent'); loadNotifications();}).catch(e=>{alert('Broadcast failed');console.error(e)}); } });
+</script>
+{% endif %}
+
+{% endblock %}

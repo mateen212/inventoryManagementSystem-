@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Customers{% endblock %}
+{% block content %}
+<h1>Customers</h1>
+<div id="customers-list">Loading...</div>
+<script>
+function loadCustomers(){
+  apiFetch('/api/customers/').then(r=>{
+    const c = document.getElementById('customers-list');
+    if(!r || r.length===0){ c.innerHTML = '<p>No customers found.</p>'; return }
+    c.innerHTML = r.map(u=>`<div class="card mb-2"><div class="card-body d-flex justify-content-between"><div><strong>${u.full_name||u.username}</strong><br/>${u.email}</div><div><button class="btn btn-sm btn-warning" onclick="toggleEnable(${u.id}, ${u.is_active})">${u.is_active? 'Disable':'Enable'}</button></div></div></div>`).join('');
+  }).catch(e=>{ document.getElementById('customers-list').innerText='Error loading customers'; console.error(e) });
+}
+function toggleEnable(id, isActive){ const url = `/api/customers/${id}/${isActive? 'disable':'enable'}`; apiFetch(url,{method:'POST'}).then(()=>loadCustomers()).catch(e=>{alert('Action failed'); console.error(e)});
+}
+loadCustomers();
+</script>
+{% endblock %}
