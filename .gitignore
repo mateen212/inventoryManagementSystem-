@@ -43,7 +43,7 @@ MANIFEST
 *.sqlite3
 
 # Alembic
-alembic.ini
+# alembic.ini
 migrations/__pycache__/
 migrations/versions/*.pyc
 migrations/versions/__pycache__/
