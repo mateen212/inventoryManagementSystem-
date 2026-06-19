@@ -17,6 +17,16 @@ Primary features (implemented)
 - Notifications: admin send/broadcast; customer inbox + mark-as-read
 - Admin pages: basic `customers` management and `analytics` metrics
 
+Working features (5–7 key, ready-to-use)
+-------------------------------------
+1. Product management — Full CRUD for products from the admin UI and API (`/api/products/`), including stock and SKU handling; customers view product lists at `/products`.
+2. Persistent Cart & Checkout — Customers can add/update/remove cart items via `/api/carts/`, and complete checkout with `/api/carts/checkout`, which creates `Order` records and decrements stock.
+3. Orders & Order Detail — Customers see their orders at `/orders` and a detailed order page at `/orders/{id}` with line items and totals.
+4. Wishlist — Add/remove products to a personal wishlist from the product cards and view at `/wishlists` (API: `/api/wishlists/`).
+5. Notifications — Admins can send or broadcast notifications (`/api/notifications/send`, `/api/notifications/broadcast`); users see notifications at `/notifications` and can mark as read.
+6. Admin Dashboard & Customer Management — Admin UI with `/analytics` (metrics), `/customers` (list + enable/disable) and guarded admin routes enforced server-side.
+7. Authentication & Role-based Access Control — JWT-based cookie auth with server-side `require_admin` / `require_authenticated` dependencies protecting APIs and web pages; admin seeded on first startup.
+
 Architecture & Key Files
 ------------------------
 - `app/main.py` — app entrypoint and router registration
