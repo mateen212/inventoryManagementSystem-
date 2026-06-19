@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+{% if user %}
+<div class="container-cards">
+    <div class="card-ghost">
+        <div class="card-title">Total Products</div>
+        <div class="card-value">{{ totals.products or 0 }}</div>
+    </div>
+    <div class="card-ghost">
+        <div class="card-title">Orders</div>
+        <div class="card-value">{{ totals.orders or 0 }}</div>
+    </div>
+    <div class="card-ghost">
+        <div class="card-title">Revenue</div>
+        <div class="card-value">${{ totals.revenue or '0.00' }}</div>
+    </div>
+    <div class="card-ghost">
+        <div class="card-title">Customers</div>
+        <div class="card-value">{{ totals.customers or 0 }}</div>
+    </div>
+</div>
+
+<div class="card-ghost">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0">Sales (Last 30 days)</h3>
+        <div class="text-muted">Overview</div>
+    </div>
+    <div class="mt-12">
+        <!-- Placeholder for line chart -->
+        <div id="chart-line" style="height:220px;background:linear-gradient(90deg, rgba(255,255,255,0.01), transparent);border-radius:12px"></div>
+    </div>
+</div>
+
+<div style="height:20px"></div>
+
+<div class="card-ghost">
+    <h4 style="margin:0 0 12px 0">Recent Orders</h4>
+    <table class="table-modern">
+        <thead>
+            <tr><th>Order</th><th>Customer</th><th>Status</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+            {% for o in recent_orders %}
+                <tr>
+                    <td>{{ o.id }}</td>
+                    <td>{{ o.customer_name }}</td>
+                    <td>{{ o.status }}</td>
+                    <td>${{ o.total }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="4" class="text-muted">No recent orders</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+<script>
+    // Minimal chart placeholder animation
+    const el = document.getElementById('chart-line');
+    if (el) {
+        const canvas = document.createElement('canvas');
+        canvas.width = el.clientWidth; canvas.height = el.clientHeight;
+        el.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'rgba(79,70,229,0.08)';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.strokeStyle = '#4F46E5'; ctx.lineWidth = 2; ctx.beginPath();
+        for(let i=0;i<30;i++){ const x = (canvas.width/29)*i; const y = canvas.height - (Math.sin(i/4)+1)/2*canvas.height*0.7; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);} ctx.stroke();
+    }
+</script>
+
+{% else %}
+<div class="card-ghost" style="max-width:800px;margin:0 auto;text-align:center">
+    <h1 style="font-family:Poppins;margin-bottom:6px">Welcome to {{ config.APP_NAME }}</h1>
+    <p class="text-muted">A modern inventory management system — manage products, orders, customers, and analytics.</p>
+    <div style="margin-top:18px;display:flex;gap:12px;justify-content:center">
+        <a class="btn-gradient" href="/login">Login</a>
+        <a class="btn-pill" href="/register" style="background:transparent;border:1px solid var(--borders)">Register</a>
+    </div>
+    <div style="margin-top:18px" class="text-muted">Designed with a premium SaaS UI in mind.</div>
+    </div>
+{% endif %}
+{% endblock %}

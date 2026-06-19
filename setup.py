@@ -1,0 +1,39 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="inventory-management-system",
+    version="1.0.0",
+    packages=find_packages(),
+    include_package_data=True,
+    install_requires=[
+        "fastapi",
+        "uvicorn",
+        "sqlalchemy",
+        "alembic",
+        "python-dotenv",
+        "passlib[bcrypt]",
+        "python-jose[cryptography]",
+        "bcrypt",
+        "pydantic",
+        "pydantic-settings",
+        "jinja2",
+        "python-multipart",
+        "typer[all]",
+        "pandas",
+        "numpy",
+        "matplotlib",
+        "openpyxl",
+        "xlsxwriter",
+        "reportlab",
+        "python-barcode",
+        "qrcode",
+        "Pillow",
+        "pyzbar",
+        "schedule",
+    ],
+    entry_points={
+        "console_scripts": [
+            "inventory-manager=app.cli:app",
+        ],
+    },
+)

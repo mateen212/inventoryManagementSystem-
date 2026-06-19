@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Cart{% endblock %}
+{% block content %}
+<h1>Cart</h1>
+<div id="cart-area">
+  <div id="cart-items" class="list-group mb-3">Loading...</div>
+  <div class="d-flex justify-content-end">
+	<button id="checkout-btn" class="btn btn-success">Checkout</button>
+  </div>
+</div>
+
+<script>
+function apiFetch(url, opts={}){
+	opts.credentials = opts.credentials || 'same-origin';
+	if(!opts.headers) opts.headers = {};
+	if(opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)){
+		opts.headers['Content-Type'] = 'application/json';
+		opts.body = JSON.stringify(opts.body);
+	}
+	return fetch(url, opts).then(async res => {
+		if(!res.ok){
+			const txt = await res.text();
+			throw new Error(txt || res.statusText);
+		}
+		return res.status === 204 ? null : res.json();
+	});
+}
+
+function loadCart(){
+	apiFetch('/api/carts/').then(data=>{
+		const container = document.getElementById('cart-items');
+		const items = data.items || [];
+		if(!items.length){ container.innerHTML = '<div class="text-muted">Cart is empty</div>'; return; }
+		container.innerHTML = items.map(it=>`
+			<div class="list-group-item d-flex justify-content-between align-items-center">
+				<div>
+					<strong>${it.product_name || it.name || 'Item'}</strong>
+					<div class="text-muted">SKU: ${it.sku || ''}</div>
+				</div>
+				<div class="d-flex align-items-center">
+					<input type="number" value="${it.quantity}" min="1" style="width:70px" onchange="updateCartItem(${it.id}, this.value)" class="form-control form-control-sm me-2" />
+					<button class="btn btn-sm btn-danger" onclick="removeCartItem(${it.id})">Remove</button>
+				</div>
+			</div>
+		`).join('');
+	}).catch(e=>{ document.getElementById('cart-items').innerHTML = '<div class="text-danger">Error loading cart</div>'; console.error(e); });
+}
+
+function updateCartItem(itemId, qty){
+	apiFetch(`/api/carts/${itemId}?quantity=${qty}`, {method:'PUT'})
+	.then(()=>loadCart()).catch(e=>{alert('Update failed');console.error(e)});
+}
+
+function removeCartItem(itemId){
+	apiFetch(`/api/carts/${itemId}`, {method:'DELETE'})
+	.then(()=>loadCart()).catch(e=>{alert('Remove failed');console.error(e)});
+}
+
+document.getElementById('checkout-btn').addEventListener('click', function(){
+	if(!confirm('Proceed to checkout?')) return;
+	apiFetch('/api/carts/checkout', {method:'POST'}).then(r=>{
+		// On success, redirect to order success page or show message
+		window.location.href = '/order-success';
+	}).catch(e=>{ alert('Checkout failed'); console.error(e); });
+});
+
+loadCart();
+</script>
+{% endblock %}

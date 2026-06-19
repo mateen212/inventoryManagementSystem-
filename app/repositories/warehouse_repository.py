@@ -1,0 +1,1 @@
+class WarehouseRepository: pass

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Categories{% endblock %}
+{% block content %}
+<h1>Categories</h1>
+{% if user and user.role and user.role.name == 'admin' %}
+<div class="mb-3">
+  <form id="category-form" class="d-flex gap-2">
+    <input id="cat-id" type="hidden">
+    <input id="cat-name" class="form-control" placeholder="Name" required>
+    <input id="cat-desc" class="form-control" placeholder="Description">
+    <button class="btn btn-primary">Save</button>
+    <button id="cat-cancel" type="button" class="btn btn-secondary">Cancel</button>
+  </form>
+</div>
+{% endif %}
+<div id="category-list" class="list-group"></div>
+
+<script>
+function apiFetch(url, opts={}){
+    opts.credentials = opts.credentials || 'same-origin';
+    if(!opts.headers) opts.headers = {};
+    if(opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)){
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(opts.body);
+    }
+    return fetch(url, opts).then(async res => {
+        if(!res.ok){ const txt = await res.text(); throw new Error(txt||res.statusText); }
+        return res.status===204?null:res.json();
+    });
+}
+
+function loadCategories(){
+    apiFetch('/api/categories/').then(data=>{
+        const container = document.getElementById('category-list');
+        container.innerHTML = data.map(c=>{
+            return `<div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>${c.name}</strong>
+                  <div class="text-muted">${c.description||''}</div>
+                </div>
+                <div>
+                  {% if user and user.role and user.role.name == 'admin' %}
+                  <button class="btn btn-sm btn-warning" onclick="editCategory(${c.id}, '${c.name.replace("'","\'" )}', '${(c.description||'').replace("'","\'")}')">Edit</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteCategory(${c.id})">Delete</button>
+                  {% endif %}
+                </div>
+            </div>`;
+        }).join('');
+    }).catch(e=>console.error(e));
+}
+
+function editCategory(id,name,desc){
+    document.getElementById('cat-id').value = id;
+    document.getElementById('cat-name').value = name;
+    document.getElementById('cat-desc').value = desc;
+}
+
+function deleteCategory(id){
+    if(!confirm('Delete category?')) return;
+    apiFetch(`/api/categories/${id}`, {method:'DELETE'}).then(()=>loadCategories()).catch(e=>console.error(e));
+}
+
+const form = document.getElementById('category-form');
+if(form){
+    document.getElementById('cat-cancel').addEventListener('click', ()=>{ form.reset(); document.getElementById('cat-id').value=''; });
+    form.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        const id = document.getElementById('cat-id').value;
+        const payload = { name: document.getElementById('cat-name').value, description: document.getElementById('cat-desc').value };
+        const method = id? 'PUT':'POST';
+        const url = id? `/api/categories/${id}`:'/api/categories/';
+        apiFetch(url, {method, body: payload}).then(()=>{ form.reset(); document.getElementById('cat-id').value=''; loadCategories(); }).catch(e=>console.error(e));
+    });
+}
+
+loadCategories();
+</script>
+{% endblock %}

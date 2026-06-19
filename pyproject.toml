@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "inventory-management-system"
+version = "1.0.0"
+description = "A complete inventory management system"
+readme = "README.md"
+authors = [{name = "Your Name", email = "you@example.com"}]
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "alembic",
+    "python-dotenv",
+    "passlib[bcrypt]",
+    "python-jose[cryptography]",
+    "bcrypt",
+    "pydantic",
+    "pydantic-settings",
+    "jinja2",
+    "python-multipart",
+    "typer[all]",
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "openpyxl",
+    "xlsxwriter",
+    "reportlab",
+    "python-barcode",
+    "qrcode",
+    "Pillow",
+    "pyzbar",
+    "schedule",
+]
+
+[project.scripts]
+inventory-manager = "app.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["app*"]

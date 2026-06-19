@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Inventory Management{% endblock %}</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body class="app-body {% if request.cookies.get('theme') == 'dark' %}theme-dark{% else %}theme-light{% endif %}">
+    <div class="app-layout">
+      {% if user %}
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-top">
+          <a class="brand" href="/">{{ config.APP_NAME }}</a>
+        </div>
+        <nav class="sidebar-nav">
+          <ul>
+            {% if user and user.role and user.role.name == 'admin' %}
+            <li><a href="/"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a></li>
+            <li><a href="/products"><i class="fa-solid fa-boxes-stacked"></i><span>Products</span></a></li>
+            <li><a href="/categories"><i class="fa-solid fa-tags"></i><span>Categories</span></a></li>
+            <li><a href="/warehouses"><i class="fa-solid fa-warehouse"></i><span>Warehouses</span></a></li>
+            <li><a href="/suppliers"><i class="fa-solid fa-truck"></i><span>Suppliers</span></a></li>
+            <li><a href="/customers"><i class="fa-solid fa-users"></i><span>Customers</span></a></li>
+            <li><a href="/orders"><i class="fa-solid fa-receipt"></i><span>Orders</span></a></li>
+            <li><a href="/reports"><i class="fa-solid fa-chart-pie"></i><span>Reports</span></a></li>
+            <li><a href="/analytics"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></a></li>
+            <li><a href="/notifications"><i class="fa-solid fa-bell"></i><span>Notifications</span></a></li>
+            <li><a href="/settings"><i class="fa-solid fa-gear"></i><span>Settings</span></a></li>
+            <li><a href="/users"><i class="fa-solid fa-users-cog"></i><span>Users</span></a></li>
+            <li><a href="/backup"><i class="fa-solid fa-server"></i><span>Backup & Restore</span></a></li>
+            <li><a href="/logs"><i class="fa-solid fa-file-lines"></i><span>Logs</span></a></li>
+            {% elif user and user.role and user.role.name == 'customer' %}
+            <li><a href="/"><i class="fa-solid fa-house"></i><span>Home</span></a></li>
+            <li><a href="/products"><i class="fa-solid fa-boxes-stacked"></i><span>Products</span></a></li>
+            <li><a href="/cart"><i class="fa-solid fa-cart-shopping"></i><span>Cart</span></a></li>
+            <li><a href="/wishlists"><i class="fa-solid fa-heart"></i><span>Wishlist</span></a></li>
+            <li><a href="/orders"><i class="fa-solid fa-receipt"></i><span>Orders</span></a></li>
+            <li><a href="/profile"><i class="fa-solid fa-user"></i><span>Profile</span></a></li>
+            <li><a href="/notifications"><i class="fa-solid fa-bell"></i><span>Notifications</span></a></li>
+            {% endif %}
+          </ul>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="profile">
+            <div class="avatar">{% if user %}{{ user.full_name[0]|upper }}{% endif %}</div>
+            <div class="meta">
+              <div class="name">{% if user %}{{ user.full_name }}{% endif %}</div>
+              <div class="role">{% if user and user.role %}{{ user.role.name }}{% endif %}</div>
+            </div>
+          </div>
+          <a class="logout" href="/logout"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a>
+        </div>
+      </aside>
+      {% endif %}
+
+      <div class="main">
+        {% if user %}
+        <header class="topbar">
+          <div class="topbar-left">
+            <button id="sidebar-toggle" class="icon-btn">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="search">
+              <input id="top-search" placeholder="Search..." />
+              <button class="icon-btn">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
+            </div>
+          </div>
+          <div class="topbar-right">
+            <button id="theme-toggle" class="icon-btn" aria-label="Toggle theme">
+              <i class="fa-solid fa-moon"></i>
+            </button>
+            <div class="notifications icon-btn" title="Notifications">
+              <i class="fa-solid fa-bell"></i><span class="badge">3</span>
+            </div>
+            <div class="profile-dropdown">
+              <a href="/profile">{% if user %}{{ user.full_name }}{% endif %}</a>
+            </div>
+          </div>
+        </header>
+        {% endif %}
+
+        <main class="content">{% block content %}{% endblock %}</main>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener('click', function (e) {
+        const toggle = document.getElementById('sidebar-toggle')
+        if (!toggle) return
+        toggle.addEventListener('click', function () {
+          document.body.classList.toggle('sidebar-collapsed')
+        })
+      })
+    </script>
+  </body>
+</html>
